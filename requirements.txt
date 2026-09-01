@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+motor
+pymongo
+pyodbc
+apscheduler
+pydantic
+python-dotenv
