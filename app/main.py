@@ -50,9 +50,12 @@ async def receive_call_log(request: Request, response: Response):
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"detail": "invalid payload"}
 
-    # 3) Derive direction, strip the recording filename field (never
-    #    persisted — metadata only, per requirement).
-    direction = derive_direction(cdr.caller_number, cdr.callee_number)
+    # 3) Derive direction — primary signal is Simotel's documented
+    #    `type` field (incoming/outgoing/local/feature), falling back
+    #    to the number-length heuristic only if `type` is missing or
+    #    unrecognized. Strip the recording filename (never persisted —
+    #    metadata only, per requirement).
+    direction = derive_direction(cdr.caller_number, cdr.callee_number, cdr.call_type)
     raw_payload = cdr.model_dump(exclude={"record"})
 
     document = {
@@ -60,6 +63,7 @@ async def receive_call_log(request: Request, response: Response):
         "direction": direction,
         "caller_number": cdr.caller_number,
         "callee_number": cdr.callee_number,
+        "call_type": cdr.call_type,
         "queue": cdr.queue,
         "start_time": cdr.start_time,
         "ring_time": cdr.ring_time,
@@ -67,7 +71,10 @@ async def receive_call_log(request: Request, response: Response):
         "end_time": cdr.end_time,
         "duration": cdr.duration,
         "billsec": cdr.billsec,
+        "wait": cdr.wait,
         "disposition": cdr.disposition,
+        "entry_point": cdr.entry_point,
+        "outgoing_point": cdr.outgoing_point,
         "received_at": datetime.now(timezone.utc),
         "synced_to_sql": False,
         "raw_payload": raw_payload,
@@ -77,9 +84,11 @@ async def receive_call_log(request: Request, response: Response):
     #    (guards against a retried delivery).
     await insert_call_log(document)
 
-    # 5) Immediate, minimal response.
-    response.status_code = status.HTTP_204_NO_CONTENT
-    return None
+    # 5) Immediate response. Confirmed with the team: Simotel expects
+    #    HTTP 200 here (not 204) and does not parse the response body
+    #    ("response is undefined") — an empty 200 satisfies both.
+    response.status_code = status.HTTP_200_OK
+    return {}
 
 
 @app.get("/health")

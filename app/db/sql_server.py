@@ -2,10 +2,10 @@ from app.config import settings
 
 _INSERT_SQL = f"""
 INSERT INTO {settings.SQLSERVER_TABLE}
-    (CallId, Direction, CallerNumber, CalleeNumber, Queue,
+    (CallId, Direction, CallerNumber, CalleeNumber, CallType, Queue,
      StartTime, RingTime, AnswerTime, EndTime,
-     Duration, BillSec, Disposition, ReceivedAt)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     Duration, BillSec, Wait, EntryPoint, OutgoingPoint, Disposition, ReceivedAt)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 """
 
 
@@ -37,13 +37,17 @@ def batch_insert(records: list[dict]) -> int:
                 r["direction"],
                 r["caller_number"],
                 r["callee_number"],
+                r.get("call_type"),
                 r.get("queue"),
                 r["start_time"],
                 r.get("ring_time"),
                 r.get("answer_time"),
                 r["end_time"],
-                r["duration"],
-                r["billsec"],
+                r.get("duration"),
+                r.get("billsec"),
+                r.get("wait"),
+                r.get("entry_point"),
+                r.get("outgoing_point"),
                 r["disposition"],
                 r["received_at"],
             )

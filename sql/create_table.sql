@@ -8,13 +8,17 @@ CREATE TABLE dbo.tblCallLog
     Direction           NVARCHAR(20)     NOT NULL,
     CallerNumber        NVARCHAR(32)         NULL,
     CalleeNumber        NVARCHAR(32)         NULL,
+    CallType            NVARCHAR(20)         NULL,  -- Simotel's "type" field (e.g. "local"); stored for reference, not yet used for Direction
     Queue               NVARCHAR(32)         NULL,
     StartTime           DATETIME2(3)     NOT NULL,
     RingTime            DATETIME2(3)         NULL,
     AnswerTime          DATETIME2(3)         NULL,
     EndTime             DATETIME2(3)     NOT NULL,
-    Duration            INT              NOT NULL,
-    BillSec             INT              NOT NULL,
+    Duration            INT                  NULL,  -- present on NO ANSWER calls; NULL on answered calls
+    BillSec             INT                  NULL,  -- present on ANSWERED calls; NULL on no-answer calls
+    Wait                INT                  NULL,  -- ring/wait time in seconds
+    EntryPoint          NVARCHAR(64)         NULL,  -- inbound gateway name, when present
+    OutgoingPoint       NVARCHAR(64)         NULL,  -- outbound gateway name, when present
     Disposition         NVARCHAR(20)     NOT NULL,
     ReceivedAt          DATETIME2(3)     NOT NULL,
 
